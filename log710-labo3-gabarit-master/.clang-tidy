@@ -1,0 +1,18 @@
+---
+Checks: 'clang-diagnostic-*,clang-analyzer-*,bugprone-*,cert-*,readability-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling'
+CheckOptions:
+  - { key: readability-identifier-naming.StructCase,          value: lower_case }
+  - { key: readability-identifier-naming.EnumCase,            value: lower_case }
+  - { key: readability-identifier-naming.UnionCase,           value: lower_case }
+  - { key: readability-identifier-naming.FunctionCase,        value: lower_case }
+  - { key: readability-identifier-naming.GlobalFunctionCase,  value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,        value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariableCase,  value: lower_case }
+  - { key: readability-identifier-naming.LocalVariableCase,   value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,       value: lower_case }
+  - { key: readability-identifier-naming.TypedefCase,         value: lower_case }
+  - { key: readability-identifier-naming.TypedefSuffix,       value: _t }
+  - { key: readability-identifier-naming.GlobalConstantCase,  value: UPPER_CASE }
+  - { key: readability-identifier-naming.EnumConstantCase,    value: UPPER_CASE }
+  - { key: readability-identifier-naming.MacroDefinitionCase, value: UPPER_CASE }
+---

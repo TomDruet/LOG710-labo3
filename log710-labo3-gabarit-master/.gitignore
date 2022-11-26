@@ -1,0 +1,51 @@
+### C ###
+# Prérequis
+*.d
+
+# Objets
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker
+*.ilk
+*.map
+*.exp
+
+# Librairies
+*.lib
+*.a
+*.la
+*.lo
+
+# Objets partagés
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Exécutables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Fichiers de déboguage.
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+### Laboratoire  ###
+Log710Process
+Log710FcfsScheduler
+Log710PriorityScheduler
+Log710HybridScheduler
+
+### Laboratoire ###
+libmem.so
+Log710Test
+Log710Lab3

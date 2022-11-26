@@ -1,0 +1,20 @@
+{
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+    },
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "clang-tidy.lintOnSave": true,
+    "clang-tidy.compilerArgs": [
+        "-Wall",
+        "-Wextra",
+        "-Werror=vla",
+        "-Werror=alloca",
+        "-Werror=main",
+        "-std=gnu11",
+        "-ggdb"
+    ]
+}
