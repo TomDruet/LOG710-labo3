@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/mman.h>
 
 // IMPORTANT(Alexis Brodeur): Dans ce fichier, et tout code utilisé par ce fichier,
 // vous ne pouvez pas utiliser `malloc`, `free`, etc.
@@ -49,8 +50,17 @@ static block_t* block_next(block_t* block)
     // TODO(Alexis Brodeur): À implémenter.
 
     ((void)block);
+    block_t* next_block;
+    next_block = ((char*) block) + sizeof(block_t) + block->size;
 
-    return NULL;
+    if((char*)next_block < (char*)state.ptr + state.len)
+    {
+        return next_block;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 /**
@@ -65,6 +75,20 @@ static void block_acquire(block_t* block, size_t size)
     assert(block != NULL);
     assert(block->size >= size);
     assert(block->free);
+
+
+    
+    block->free = false;
+    block->size = size;
+
+
+    // verifier split 
+    // nouveau block free
+    block_t* block
+
+
+    // a_block->previous = 
+
 
     // TODO(Alexis Brodeur): À implémenter.
     //
@@ -84,6 +108,10 @@ static void block_release(block_t* block)
     assert(block != NULL);
     assert(!block->free);
 
+
+
+    block->free = true;
+
     // TODO(Alexis Brodeur): À implémenter.
 
     // IMPORTANT(Alexis Brodeur):
@@ -98,17 +126,26 @@ void mem_init(size_t size, mem_strategy_t strategy)
     assert(strategy >= 0);
     assert(strategy < NUM_MEM_STRATEGIES);
 
-    // TODO(Alexis Brodeur): Initialiser l'allocation de mémoire.
-
-    // IMPORTANT(Alexis Brodeur): Combien avec-vous de blocs initialement ?
-
-    // IMPORTANT(Alexis Brodeur): Comment obtenir de la mémoire sans utiliser
-    // `malloc` ?
+    printf("before\n");
+    state.ptr = mmap(NULL,size,PROT_READ | PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS,0,0);
+    printf("after mmap\n");
+    if(state.ptr == MAP_FAILED)
+    {
+        printf("Mapping Failed\n");
+    }
+    state.len = size;
+    state.strategy = strategy;
+    block_t* a_block = block_first();
+    a_block->previous = NULL;
+    a_block->free = true;
+    a_block->size = state.len - sizeof(block_t);
 }
 
 void mem_deinit(void)
 {
     // TODO(Alexis Brodeur): Libérez la mémoire utilisée par votre gestionnaire.
+    int err;
+    err = munmap(state.ptr,state.len);
 }
 
 void* mem_alloc(size_t size)
@@ -118,23 +155,31 @@ void* mem_alloc(size_t size)
     // TODO(Alexis Brodeur): Alloue un bloc de `size` octets.
     //
     // Ce bloc et ses métadonnées doivent être réservées dans la mémoire pointée
-    // par `state.ptr`.
-
+    // par `state`..ptr
+   
     // NOTE(Alexis Brodeur): Utiliser la structure `block_t` ci-dessus et les
     // ses fonctions associées.
     //
     // Venez me poser des questions si cela n'est pas clair !
+    block_t* block = NULL;
+    // switch pour la strategie
+    
+    // boucle for pour trouver le bon espace libre
 
-    return NULL;
+    if(block == NULL)
+    {
+        return NULL;
+    }
+    
+    block_acquire(block,size);
+    return block + 1;
 }
 
 void mem_free(void* ptr)
 {
     assert(ptr != NULL);
-
-    // TODO(Alexis Brodeur): Libère le bloc de mémoire pointé par `ptr`.
-    //
-    // Assumez que `ptr` est TOUJOURS un pointeur retourné par `mem_alloc`.
+    block_t* block = (block_t*)ptr - 1;
+    block_release(block);
 }
 
 size_t mem_get_free_block_count()
@@ -206,4 +251,15 @@ void mem_print_state(void)
     // ```
     // A100 F24 A20 A58 F20 A27 F600
     // ```
+    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+    {
+        if(block->free)
+        {
+            printf("F%zu ",block->size);
+        }
+        else
+        {
+            printf("A%zu ",block->size);
+        }
+    }
 }
