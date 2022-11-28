@@ -106,33 +106,37 @@ static void block_release(block_t* block)
     assert(block != NULL);
     assert(!block->free);
 
-    /*
+    
     if(block->previous != NULL)
     {
         if(block->previous->free)
         {
-
-        }
-        else
-        {
-
-        }
-    }
-    */
-    if(block_next(block)!=NULL)
-    {
-        if(block_next(block)->free)
-        {
-            
+            block->previous->size = block->previous->size + sizeof(block_t) + block->size;
+            block->free = true; // inutile ?
+            block_next(block)->previous = block->previous;
+            //delete(block); // comment peut on faire pour deleter le block qui a éte merge
         }
         else
         {
             block->free = true;
         }
     }
-
-    // TODO(Alexis Brodeur): À implémenter.
-
+    
+    if(block_next(block)!=NULL)
+    {
+        if(block_next(block)->free)
+        {
+            block->size = block->size + sizeof(block_t) + block_next(block)->size;
+            block->free = true;
+            block_next(block_next(block))->previous = block;
+            //delete(block_next(block)); // comment peut on faire pour deleter le block qui a éte merge
+        }
+        else
+        {
+            block->free = true;
+        }
+    }
+    
     // IMPORTANT(Alexis Brodeur):
     // Que faire si le bloc suivant est libre ?
     // Que faire si le bloc précédent est libre ?
@@ -311,4 +315,5 @@ void test2()
     assert(block_first()->free);
     assert(block_first()->size == 1000);
     assert(block_next(block_first()) == NULL);
+    
 }

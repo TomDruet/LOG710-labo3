@@ -255,7 +255,7 @@ static continue_t handle_free(int argc, char** argv)
 static continue_t handle_test()
 {
     test1();
-    test2();
+    //test2();
     return CONTINUE;
 }
 
