@@ -93,21 +93,6 @@ static void block_acquire(block_t* block, size_t size)
     {
         block_next(nouveau_block)->previous = nouveau_block;
     }
-
-
-    // verifier split 
-    // nouveau block free
-    //block_t* block
-
-
-    // a_block->previous = 
-
-
-    // TODO(Alexis Brodeur): À implémenter.
-    //
-    // IMPORTANT(Alexis Brodeur):
-    // Que faire si `block->size > size` ?  Utiliser les 1000 octets d'un bloc
-    // libre pour une allocation de 10 octets ne fait pas de sens.
 }
 
 /**
@@ -121,9 +106,30 @@ static void block_release(block_t* block)
     assert(block != NULL);
     assert(!block->free);
 
+    /*
+    if(block->previous != NULL)
+    {
+        if(block->previous->free)
+        {
 
+        }
+        else
+        {
 
-    block->free = true;
+        }
+    }
+    */
+    if(block_next(block)!=NULL)
+    {
+        if(block_next(block)->free)
+        {
+            
+        }
+        else
+        {
+            block->free = true;
+        }
+    }
 
     // TODO(Alexis Brodeur): À implémenter.
 
@@ -179,7 +185,7 @@ void* mem_alloc(size_t size)
     
     // boucle for pour trouver le bon espace libre
 
-    
+
 
     if(block == NULL)
     {
@@ -283,7 +289,7 @@ void mem_print_state(void)
 void test1()
 {
     printf("1");
-    block_acquire(state.ptr, 100);
+    block_acquire(block_first(), 100);
     block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
     assert(nouveau_block != NULL);
     assert(nouveau_block->free);
@@ -291,4 +297,18 @@ void test1()
     assert(nouveau_block->size == 876);
     assert(block_next(state.ptr) == nouveau_block);
     assert(block_next(block_next(state.ptr)) == NULL);
+    assert(block_first()->free == false);
+}
+
+void test2()
+{
+    printf("2");
+    block_acquire(state.ptr, 100);
+    block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
+    block_release(state.ptr);
+    assert(state.ptr != NULL);
+    assert(nouveau_block == NULL);
+    assert(block_first()->free);
+    assert(block_first()->size == 1000);
+    assert(block_next(block_first()) == NULL);
 }
