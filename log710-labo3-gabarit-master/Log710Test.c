@@ -51,6 +51,7 @@ static continue_t handle_exit();
 static continue_t handle_state();
 static continue_t handle_list(int argc, char** argv);
 static continue_t handle_probe(int argc, char** argv);
+static continue_t handle_test();
 
 int main(int argc, char** argv)
 {
@@ -120,6 +121,7 @@ static continue_t handle_command(int argc, char** argv)
         { "L", handle_list },
         { "PROBE", handle_probe },
         { "P", handle_probe },
+        { "T", handle_test},
         { NULL, NULL }
     };
 
@@ -247,6 +249,12 @@ static continue_t handle_free(int argc, char** argv)
     }
 
     printf("aucune allocation avec l'identifiant: %zu\n", identifier);
+    return CONTINUE;
+}
+
+static continue_t handle_test()
+{
+    test1();
     return CONTINUE;
 }
 
@@ -404,6 +412,7 @@ static void parse_options(int argc, char** argv)
 
             break;
         }
+
         case 'h':
         case '?':
         case ':':

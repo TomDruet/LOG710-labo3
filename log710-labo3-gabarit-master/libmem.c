@@ -77,14 +77,27 @@ static void block_acquire(block_t* block, size_t size)
     assert(block->free);
 
 
+    size_t size_temp = block->size - size - sizeof(block_t);
     
     block->free = false;
     block->size = size;
 
 
+    block_t* nouveau_block = ((char*) block) + sizeof(block_t) + block->size;
+    nouveau_block->previous = block;
+    nouveau_block->free = true;
+    nouveau_block->size = size_temp;
+
+
+    if(block_next(nouveau_block) != NULL)
+    {
+        block_next(nouveau_block)->previous = nouveau_block;
+    }
+
+
     // verifier split 
     // nouveau block free
-    block_t* block
+    //block_t* block
 
 
     // a_block->previous = 
@@ -165,6 +178,8 @@ void* mem_alloc(size_t size)
     // switch pour la strategie
     
     // boucle for pour trouver le bon espace libre
+
+    
 
     if(block == NULL)
     {
@@ -262,4 +277,18 @@ void mem_print_state(void)
             printf("A%zu ",block->size);
         }
     }
+}
+
+
+void test1()
+{
+    printf("1");
+    block_acquire(state.ptr, 100);
+    block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
+    assert(nouveau_block != NULL);
+    assert(nouveau_block->free);
+    assert(nouveau_block->previous == state.ptr);
+    assert(nouveau_block->size == 876);
+    assert(block_next(state.ptr) == nouveau_block);
+    assert(block_next(block_next(state.ptr)) == NULL);
 }
