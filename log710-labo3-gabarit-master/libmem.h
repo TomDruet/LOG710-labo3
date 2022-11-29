@@ -36,4 +36,7 @@ bool mem_is_allocated(void* ptr);
 
 void mem_print_state(void);
 
+void test1();
+void test2();
+
 #endif
