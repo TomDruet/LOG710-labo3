@@ -2,6 +2,18 @@
     "files.associations": {
         "*.h": "c",
         "*.c": "c",
+        "type_traits": "c",
+        "array": "c",
+        "atomic": "c",
+        "*.tcc": "c",
+        "concepts": "c",
+        "new": "c",
+        "numeric": "c",
+        "ostream": "c",
+        "system_error": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c"
     },
     "editor.formatOnSave": true,
     "[c]": {

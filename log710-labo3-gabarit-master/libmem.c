@@ -106,36 +106,32 @@ static void block_release(block_t* block)
     assert(block != NULL);
     assert(!block->free);
 
+    block_t *previous = block->previous;
+    block_t *next = block_next(block);
+
     
-    if(block->previous != NULL)
+    if(previous != NULL && previous->free)
     {
-        if(block->previous->free)
+        previous->size += sizeof(block_t) + block->size;
+        block = previous;
+
+        if(next != NULL)
         {
-            block->previous->size = block->previous->size + sizeof(block_t) + block->size;
-            block->free = true; // inutile ?
-            block_next(block)->previous = block->previous;
-            //delete(block); // comment peut on faire pour deleter le block qui a éte merge
-        }
-        else
-        {
-            block->free = true;
+            next->previous = block;
         }
     }
     
-    if(block_next(block)!=NULL)
+    if(next != NULL && next->free)
     {
-        if(block_next(block)->free)
+        block_t *after_next = block_next(next);
+        if(after_next != NULL)
         {
-            block->size = block->size + sizeof(block_t) + block_next(block)->size;
-            block->free = true;
-            block_next(block_next(block))->previous = block;
-            //delete(block_next(block)); // comment peut on faire pour deleter le block qui a éte merge
+            after_next->previous = block;
         }
-        else
-        {
-            block->free = true;
-        }
+        
+        block->size += sizeof(block_t) + next->size;
     }
+    block->free = true;
     
     // IMPORTANT(Alexis Brodeur):
     // Que faire si le bloc suivant est libre ?
@@ -184,20 +180,22 @@ void* mem_alloc(size_t size)
     // ses fonctions associées.
     //
     // Venez me poser des questions si cela n'est pas clair !
-    block_t* block = NULL;
     // switch pour la strategie
     
     // boucle for pour trouver le bon espace libre
 
-
-
-    if(block == NULL)
+    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
     {
-        return NULL;
+       
+
+
+
     }
+
+
     
-    block_acquire(block,size);
-    return block + 1;
+    //block_acquire(block,size);
+    //return block + 1;
 }
 
 void mem_free(void* ptr)
