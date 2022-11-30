@@ -183,15 +183,25 @@ void* mem_alloc(size_t size)
     // switch pour la strategie
     
     // boucle for pour trouver le bon espace libre
-
+    
     for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
     {
-       
-
-
-
+        if(block->free && block->size >= size)
+        {
+            printf("rentrer dans condition. /n");
+            block_acquire(block,size);
+            return block + 1;
+        }
+        else
+        {
+            printf("block->free /n: %d",block->free);
+            printf("block->size /n: %d",block->size);
+            printf("size -> %d/n",size);
+            printf("rentrer dans else, /n");
+            return block+1;
+        }
     }
-
+    //printf("%d",block_output->size);
 
     
     //block_acquire(block,size);
@@ -202,6 +212,15 @@ void mem_free(void* ptr)
 {
     assert(ptr != NULL);
     block_t* block = (block_t*)ptr - 1;
+
+    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+    {
+       
+        
+
+
+    }
+
     block_release(block);
 }
 
@@ -309,7 +328,7 @@ void test2()
     block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
     block_release(state.ptr);
     assert(state.ptr != NULL);
-    assert(nouveau_block == NULL);
+    assert(nouveau_block != NULL);
     assert(block_first()->free);
     assert(block_first()->size == 1000);
     assert(block_next(block_first()) == NULL);
