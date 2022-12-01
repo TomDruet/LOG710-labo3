@@ -175,24 +175,70 @@ void* mem_alloc(size_t size)
     //
     // Ce bloc et ses métadonnées doivent être réservées dans la mémoire pointée
     // par `state`..ptr
-   
+
     // NOTE(Alexis Brodeur): Utiliser la structure `block_t` ci-dessus et les
     // ses fonctions associées.
     //
     // Venez me poser des questions si cela n'est pas clair !
     // switch pour la strategie
-    
+
     // boucle for pour trouver le bon espace libre
-    
-    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+
+    switch (state.strategy)
     {
-        if(block->free && block->size + sizeof(block_t)>= size)
+    case MEM_FIRST_FIT:
+    {
+        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
         {
-            printf("rentrer dans condition. /n");
-            block_acquire(block,size);
-            return block + 1;
+            if(block->free && block->size + sizeof(block_t)>= size)
+            {
+                printf("rentrer dans condition. /n");
+                block_acquire(block,size);
+                return block + 1;
+            }
         }
     }
+    break;
+
+    case MEM_BEST_FIT:
+    {
+
+        size_t min_size = state.len;
+        block_t *temp = NULL;
+
+        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+        {
+            if(block->free && block->size + sizeof(block_t)>= size && block->size < min_size)
+            {
+                temp = block;
+                min_size = block->size;
+            }
+        }
+
+        block_acquire(temp,size);
+        return temp + 1;
+    }
+    break;
+
+    case MEM_WORST_FIT:
+    {
+        size_t max_size = 0;
+        block_t *temp_worst = NULL;
+
+        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+        {
+            if(block->free && block->size + sizeof(block_t)>= size && block->size > max_size)
+            {
+                temp_worst = block;
+                max_size = block->size;
+            }
+        }
+
+        block_acquire(temp_worst,size);
+        return temp_worst + 1;
+    }
+        break;
+   }
 }
 
 void mem_free(void* ptr)
@@ -204,17 +250,31 @@ void mem_free(void* ptr)
 
 size_t mem_get_free_block_count()
 {
-    // TODO(Alexis Brodeur): Indiquez combien de blocs de mémoire sont libre.
-
-    return 0;
+    size_t compteur = 0;
+    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+    {
+        if(block->free)
+        {
+            compteur++;
+        }
+    }
+    return compteur;
 }
 
 size_t mem_get_allocated_block_count()
 {
-    // TODO(Alexis Brodeur): Indiquez combien de blocs de mémoire sont alloués.
-
+    size_t compteur = 0;
+    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
+    {
+        if(block->free == false)
+        {
+            compteur++;
+        }
+    }
+    return compteur;
     return 0;
 }
+
 
 size_t mem_get_free_bytes()
 {
