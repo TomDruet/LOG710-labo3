@@ -186,7 +186,7 @@ void* mem_alloc(size_t size)
     
     for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
     {
-        if(block->free && block->size >= size)
+        if(block->free && block->size + sizeof(block_t)>= size)
         {
             printf("rentrer dans condition. /n");
             block_acquire(block,size);
