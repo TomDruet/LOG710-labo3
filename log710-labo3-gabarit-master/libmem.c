@@ -192,35 +192,13 @@ void* mem_alloc(size_t size)
             block_acquire(block,size);
             return block + 1;
         }
-        else
-        {
-            printf("block->free /n: %d",block->free);
-            printf("block->size /n: %d",block->size);
-            printf("size -> %d/n",size);
-            printf("rentrer dans else, /n");
-            return block+1;
-        }
     }
-    //printf("%d",block_output->size);
-
-    
-    //block_acquire(block,size);
-    //return block + 1;
 }
 
 void mem_free(void* ptr)
 {
     assert(ptr != NULL);
     block_t* block = (block_t*)ptr - 1;
-
-    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-    {
-       
-        
-
-
-    }
-
     block_release(block);
 }
 
