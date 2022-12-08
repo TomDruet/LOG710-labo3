@@ -74,19 +74,21 @@ static void block_acquire(block_t* block, size_t size)
     assert(block->size >= size);
     assert(block->free);
 
-    size_t size_temp = block->size - size - sizeof(block_t);
+    size_t remaining_size = block->size - size;
+    if (remaining_size > sizeof(block_t)) {
+        block->size = size;
+        block_t* split = block_next(block);
+        split->previous = block;
+        split->size = remaining_size - sizeof(block_t);
+        split->free = true;
+
+        block_t* next = block_next(split);
+        if (next != NULL) {
+            next->previous = split;
+        }
+    }
 
     block->free = false;
-    block->size = size;
-
-    block_t* nouveau_block = ((char*)block) + sizeof(block_t) + block->size;
-    nouveau_block->previous = block;
-    nouveau_block->free = true;
-    nouveau_block->size = size_temp;
-
-    if (block_next(nouveau_block) != NULL) {
-        block_next(nouveau_block)->previous = nouveau_block;
-    }
 }
 
 /**
