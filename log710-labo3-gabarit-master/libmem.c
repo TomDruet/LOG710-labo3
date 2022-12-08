@@ -282,8 +282,18 @@ size_t mem_get_free_bytes()
 {
     // TODO(Alexis Brodeur): Indiquez combien d'octets sont disponibles pour
     // des allocations de mémoire.
+    size_t free_bytes = 0;
 
-    return 0;
+    // Traverse the list of blocks and add the size of free blocks to the total
+    block_t* current_block = block_first();
+    while (current_block != NULL) {
+        if (current_block->free) {
+            free_bytes += current_block->size;
+        }
+        current_block = block_next(current_block);
+    }
+
+    return free_bytes;
 }
 
 size_t mem_get_biggest_free_block_size()
@@ -291,7 +301,17 @@ size_t mem_get_biggest_free_block_size()
     // TODO(Alexis Brodeur): Indiquez la taille en octets du plus gros plus de
     // mémoire libre.
 
-    return 0;
+    size_t biggest_free_block_size = 0;
+    block_t* current_block = block_first();
+
+    while (current_block != NULL) {
+        if (current_block->free && current_block->size > biggest_free_block_size) {
+            biggest_free_block_size = current_block->size;
+        }
+        current_block = block_next(current_block);
+    }
+
+    return biggest_free_block_size;
 }
 
 size_t mem_count_small_free_blocks(size_t max_bytes)
@@ -301,7 +321,19 @@ size_t mem_count_small_free_blocks(size_t max_bytes)
     // TODO(Alexis Brodeur): Indiquez combien de blocs de mémoire plus petit que
     // `max_bytes` sont disponible.
 
-    return 0;
+    size_t count = 0;
+
+    block_t* block = block_first();
+
+    while (block != NULL) {
+        if (block->free && block->size < max_bytes) {
+            ++count;
+        }
+
+        block = block_next(block);
+    }
+
+    return count;
 }
 
 bool mem_is_allocated(void* ptr)
@@ -313,6 +345,27 @@ bool mem_is_allocated(void* ptr)
     // NOTE(Alexis Brodeur): Ce pointeur peut pointer vers n'importe quelle
     // adresse mémoire.
 
+    // Get the first block in the list
+    block_t* block = block_first();
+    while (block != NULL) {
+        // Check if the given pointer falls within the range of the current block
+        if (ptr >= block && ptr < block + sizeof(block_t) + block->size) {
+            // If the block is not marked as free, then the pointer points to an allocated block
+            if (!block->free) {
+                return true;
+            }
+            // If the block is marked as free, then continue iterating through the list of blocks
+            else {
+                block = block_next(block);
+            }
+        }
+        // If the given pointer does not fall within the range of the current block, then continue iterating through the list of blocks
+        else {
+            block = block_next(block);
+        }
+    }
+
+    // If we reach the end of the list without finding a block that the pointer points to, then return false
     return false;
 }
 
