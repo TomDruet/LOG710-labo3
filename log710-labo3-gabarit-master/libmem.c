@@ -51,14 +51,11 @@ static block_t* block_next(block_t* block)
 
     ((void)block);
     block_t* next_block;
-    next_block = ((char*) block) + sizeof(block_t) + block->size;
+    next_block = ((char*)block) + sizeof(block_t) + block->size;
 
-    if((char*)next_block < (char*)state.ptr + state.len)
-    {
+    if ((char*)next_block < (char*)state.ptr + state.len) {
         return next_block;
-    }
-    else
-    {
+    } else {
         return NULL;
     }
 }
@@ -76,21 +73,17 @@ static void block_acquire(block_t* block, size_t size)
     assert(block->size >= size);
     assert(block->free);
 
-
     size_t size_temp = block->size - size - sizeof(block_t);
-    
+
     block->free = false;
     block->size = size;
 
-
-    block_t* nouveau_block = ((char*) block) + sizeof(block_t) + block->size;
+    block_t* nouveau_block = ((char*)block) + sizeof(block_t) + block->size;
     nouveau_block->previous = block;
     nouveau_block->free = true;
     nouveau_block->size = size_temp;
 
-
-    if(block_next(nouveau_block) != NULL)
-    {
+    if (block_next(nouveau_block) != NULL) {
         block_next(nouveau_block)->previous = nouveau_block;
     }
 }
@@ -106,33 +99,28 @@ static void block_release(block_t* block)
     assert(block != NULL);
     assert(!block->free);
 
-    block_t *previous = block->previous;
-    block_t *next = block_next(block);
+    block_t* previous = block->previous;
+    block_t* next = block_next(block);
 
-    
-    if(previous != NULL && previous->free)
-    {
+    if (previous != NULL && previous->free) {
         previous->size += sizeof(block_t) + block->size;
         block = previous;
 
-        if(next != NULL)
-        {
+        if (next != NULL) {
             next->previous = block;
         }
     }
-    
-    if(next != NULL && next->free)
-    {
-        block_t *after_next = block_next(next);
-        if(after_next != NULL)
-        {
+
+    if (next != NULL && next->free) {
+        block_t* after_next = block_next(next);
+        if (after_next != NULL) {
             after_next->previous = block;
         }
-        
+
         block->size += sizeof(block_t) + next->size;
     }
     block->free = true;
-    
+
     // IMPORTANT(Alexis Brodeur):
     // Que faire si le bloc suivant est libre ?
     // Que faire si le bloc précédent est libre ?
@@ -146,10 +134,9 @@ void mem_init(size_t size, mem_strategy_t strategy)
     assert(strategy < NUM_MEM_STRATEGIES);
 
     printf("before\n");
-    state.ptr = mmap(NULL,size,PROT_READ | PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS,0,0);
+    state.ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     printf("after mmap\n");
-    if(state.ptr == MAP_FAILED)
-    {
+    if (state.ptr == MAP_FAILED) {
         printf("Mapping Failed\n");
     }
     state.len = size;
@@ -164,7 +151,7 @@ void mem_deinit(void)
 {
     // TODO(Alexis Brodeur): Libérez la mémoire utilisée par votre gestionnaire.
     int err;
-    err = munmap(state.ptr,state.len);
+    err = munmap(state.ptr, state.len);
 }
 
 void* mem_alloc(size_t size)
@@ -184,61 +171,68 @@ void* mem_alloc(size_t size)
 
     // boucle for pour trouver le bon espace libre
 
-    switch (state.strategy)
-    {
-    case MEM_FIRST_FIT:
-    {
-        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-        {
-            if(block->free && block->size + sizeof(block_t)>= size)
-            {
+    switch (state.strategy) {
+    case MEM_FIRST_FIT: {
+        for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+            if (block->free && block->size + sizeof(block_t) >= size) {
                 printf("rentrer dans condition. /n");
-                block_acquire(block,size);
+                block_acquire(block, size);
                 return block + 1;
             }
         }
-    }
-    break;
+    } break;
 
-    case MEM_BEST_FIT:
-    {
+    case MEM_BEST_FIT: {
 
         size_t min_size = state.len;
-        block_t *temp = NULL;
+        block_t* temp = NULL;
 
-        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-        {
-            if(block->free && block->size + sizeof(block_t)>= size && block->size < min_size)
-            {
+        for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+            if (block->free && block->size + sizeof(block_t) >= size && block->size < min_size) {
                 temp = block;
                 min_size = block->size;
             }
         }
 
-        block_acquire(temp,size);
+        block_acquire(temp, size);
         return temp + 1;
-    }
-    break;
+    } break;
 
-    case MEM_WORST_FIT:
-    {
+    case MEM_WORST_FIT: {
         size_t max_size = 0;
-        block_t *temp_worst = NULL;
+        block_t* temp_worst = NULL;
 
-        for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-        {
-            if(block->free && block->size + sizeof(block_t)>= size && block->size > max_size)
-            {
+        for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+            if (block->free && block->size + sizeof(block_t) >= size && block->size > max_size) {
                 temp_worst = block;
                 max_size = block->size;
             }
         }
 
-        block_acquire(temp_worst,size);
+        block_acquire(temp_worst, size);
         return temp_worst + 1;
+    } break;
+
+    case MEM_NEXT_FIT: {
+        static block_t* next = NULL;
+        if (next == NULL) {
+            next = block_first();
+        }
+
+        block_t* temp_next = next;
+        do {
+            if (temp_next->free && temp_next->size + sizeof(block_t) >= size) {
+                block_acquire(temp_next, size);
+                next = block_next(temp_next);
+                return temp_next + 1;
+            }
+            temp_next = block_next(temp_next);
+        } while (temp_next != next);
+
+        next = block_first();
+        return NULL;
+    } break;
     }
-        break;
-   }
 }
 
 void mem_free(void* ptr)
@@ -251,10 +245,8 @@ void mem_free(void* ptr)
 size_t mem_get_free_block_count()
 {
     size_t compteur = 0;
-    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-    {
-        if(block->free)
-        {
+    for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+        if (block->free) {
             compteur++;
         }
     }
@@ -264,17 +256,14 @@ size_t mem_get_free_block_count()
 size_t mem_get_allocated_block_count()
 {
     size_t compteur = 0;
-    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-    {
-        if(block->free == false)
-        {
+    for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+        if (block->free == false) {
             compteur++;
         }
     }
     return compteur;
     return 0;
 }
-
 
 size_t mem_get_free_bytes()
 {
@@ -331,25 +320,20 @@ void mem_print_state(void)
     // ```
     // A100 F24 A20 A58 F20 A27 F600
     // ```
-    for(block_t* block = block_first() ; block != NULL ; block = block_next(block))
-    {
-        if(block->free)
-        {
-            printf("F%zu ",block->size);
-        }
-        else
-        {
-            printf("A%zu ",block->size);
+    for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+        if (block->free) {
+            printf("F%zu ", block->size);
+        } else {
+            printf("A%zu ", block->size);
         }
     }
 }
-
 
 void test1()
 {
     printf("1");
     block_acquire(block_first(), 100);
-    block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
+    block_t* nouveau_block = ((char*)state.ptr) + sizeof(block_t) + 100;
     assert(nouveau_block != NULL);
     assert(nouveau_block->free);
     assert(nouveau_block->previous == state.ptr);
@@ -363,12 +347,11 @@ void test2()
 {
     printf("2");
     block_acquire(state.ptr, 100);
-    block_t* nouveau_block = ((char*) state.ptr) + sizeof(block_t) + 100;
+    block_t* nouveau_block = ((char*)state.ptr) + sizeof(block_t) + 100;
     block_release(state.ptr);
     assert(state.ptr != NULL);
     assert(nouveau_block != NULL);
     assert(block_first()->free);
     assert(block_first()->size == 1000);
     assert(block_next(block_first()) == NULL);
-    
 }
