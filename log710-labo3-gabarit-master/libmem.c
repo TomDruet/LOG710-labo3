@@ -8,17 +8,6 @@
 // IMPORTANT(Alexis Brodeur): Dans ce fichier, et tout code utilisé par ce fichier,
 // vous ne pouvez pas utiliser `malloc`, `free`, etc.
 
-static struct {
-    void* ptr;
-    size_t len;
-    mem_strategy_t strategy;
-    // TODO(Alexis Brodeur): Ajouter au moins 1 champ pour le *next-fit*.
-} state;
-
-// IMPORTANT(Alexis Brodeur): Avant de commencer à implémenter le code de ce
-// laboratoire, discuter en équipe afin d'être sûr de tous avoir compris la
-// structure de données ce-dessous.
-
 typedef struct block {
     struct block* previous;
     size_t size;
@@ -26,6 +15,18 @@ typedef struct block {
     // NOTE(Alexis Brodeur): Vous pouvez ajouter des champs à cette structure de
     // données, mais vous aller perdre des points pour la qualitée.
 } block_t;
+
+static struct {
+    void* ptr;
+    size_t len;
+    mem_strategy_t strategy;
+    block_t* current_block;
+    // TODO(Alexis Brodeur): Ajouter au moins 1 champ pour le *next-fit*.
+} state;
+
+// IMPORTANT(Alexis Brodeur): Avant de commencer à implémenter le code de ce
+// laboratoire, discuter en équipe afin d'être sûr de tous avoir compris la
+// structure de données ce-dessous.
 
 /**
  * @brief Retourne le premier bloc dans la liste de blocs.
@@ -214,22 +215,34 @@ void* mem_alloc(size_t size)
     } break;
 
     case MEM_NEXT_FIT: {
-        static block_t* next = NULL;
-        if (next == NULL) {
-            next = block_first();
+
+        // initialize the current block and block size variables if this is the first allocation request
+        if (state.current_block == NULL) {
+            state.current_block = block_first();
+            state.len = 0;
         }
 
-        block_t* temp_next = next;
-        do {
-            if (temp_next->free && temp_next->size + sizeof(block_t) >= size) {
-                block_acquire(temp_next, size);
-                next = block_next(temp_next);
-                return temp_next + 1;
-            }
-            temp_next = block_next(temp_next);
-        } while (temp_next != next);
+        // loop over the blocks of memory, starting at the current block
+        block_t* block = state.current_block;
+        while (block != NULL) {
+            // check if the current block is free and large enough to satisfy the allocation request
+            if (block->free && block->size >= size) {
+                // acquire the memory from the block
+                block_acquire(block, size);
 
-        next = block_first();
+                // update the current block and block size variables
+                state.current_block = block_next(block);
+                state.len = 0;
+
+                // return a pointer to the start of the allocated memory
+                return (void*)((char*)block + sizeof(block_t));
+            }
+
+            // move to the next block in the list
+            block = block_next(block);
+        }
+
+        // if we reach this point, no suitable block was found, so return NULL to indicate failure
         return NULL;
     } break;
     }
