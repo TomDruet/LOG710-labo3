@@ -219,31 +219,37 @@ void* mem_alloc(size_t size)
         // initialize the current block and block size variables if this is the first allocation request
         if (state.current_block == NULL) {
             state.current_block = block_first();
-            state.len = 0;
         }
 
-        // loop over the blocks of memory, starting at the current block
-        block_t* block = state.current_block;
-        while (block != NULL) {
-            // check if the current block is free and large enough to satisfy the allocation request
+        // 1. loop
+        // je pars de current block et je m arrete a la fin de la liste
+
+        for (block_t* block = state.current_block; block != NULL; block = block_next(block)) {
             if (block->free && block->size >= size) {
-                // acquire the memory from the block
+                // acquire the block and update the current block
                 block_acquire(block, size);
-
-                // update the current block and block size variables
-                state.current_block = block_next(block);
-                state.len = 0;
-
-                // return a pointer to the start of the allocated memory
-                return (void*)((char*)block + sizeof(block_t));
+                state.current_block = block;
+                // return a pointer to the allocated memory
+                return (char*)block + sizeof(block_t);
             }
+        }
 
-            // move to the next block in the list
-            block = block_next(block);
+        // 2.
+        // je commence du debut et je m'arrete a current block
+
+        for (block_t* block = block_first(); block != NULL; block = block_next(block)) {
+            if (block->free && block->size >= size) {
+                // acquire the block and update the current block
+                block_acquire(block, size);
+                state.current_block = block;
+                // return a pointer to the allocated memory
+                return (char*)block + sizeof(block_t);
+            }
         }
 
         // if we reach this point, no suitable block was found, so return NULL to indicate failure
         return NULL;
+
     } break;
     }
 }
@@ -345,27 +351,28 @@ bool mem_is_allocated(void* ptr)
     // NOTE(Alexis Brodeur): Ce pointeur peut pointer vers n'importe quelle
     // adresse mémoire.
 
-    // Get the first block in the list
+    // Get the first block in the linked list.
     block_t* block = block_first();
+
+    // Iterate through the blocks in the linked list.
     while (block != NULL) {
-        // Check if the given pointer falls within the range of the current block
-        if (ptr >= block && ptr < block + sizeof(block_t) + block->size) {
-            // If the block is not marked as free, then the pointer points to an allocated block
+        // Check if the address of ptr falls within the range of memory
+        // occupied by the current block.
+        if (ptr >= (void*)((char*)block + sizeof(block_t)) && ptr < (void*)((char*)block + sizeof(block_t) + block->size)) {
+            // If the block is marked as not free, then the memory pointed to
+            // by ptr is allocated, so we return true.
             if (!block->free) {
                 return true;
             }
-            // If the block is marked as free, then continue iterating through the list of blocks
-            else {
-                block = block_next(block);
-            }
         }
-        // If the given pointer does not fall within the range of the current block, then continue iterating through the list of blocks
-        else {
-            block = block_next(block);
-        }
+
+        // Move on to the next block in the linked list.
+        block = block_next(block);
     }
 
-    // If we reach the end of the list without finding a block that the pointer points to, then return false
+    // If we reach the end of the linked list without finding a block that
+    // contains ptr, then the memory pointed to by ptr is not allocated,
+    // so we return false.
     return false;
 }
 
